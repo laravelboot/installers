@@ -18,7 +18,10 @@
         "psr-4": {
             "LaravelBoot\\Installer\\Tests\\": "tests/"
         }
-    },    
+    }, 
+	"extra": {
+        "class": "LaravelBoot\\Installer\\Composer\\Plugin"
+    },
     "require": {
         "composer-plugin-api": "^1.0"
     }
