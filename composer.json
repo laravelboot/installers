@@ -1,0 +1,25 @@
+{
+    "name": "laravelboot/installers",
+    "type": "composer-plugin",
+    "keywords": ["laravelboot", "cms", "installers", "plugin"],
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "mawenpei",
+            "email": "249350293@qq.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "LaravelBoot\\Installer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "LaravelBoot\\Installer\\Tests\\": "tests/"
+        }
+    },    
+    "require": {
+        "composer-plugin-api": "^1.0"
+    }
+}
