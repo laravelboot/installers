@@ -2,37 +2,117 @@
 
 namespace LaravelBoot\Installer\Composer\Installers;
 
+use Composer\IO\IOInterface;
 use Composer\Installer\LibraryInstaller;
 use Composer\Package\PackageInterface;
+use Composer\Repository\InstalledRepositoryInterface;
 
 /**
  * Class Installer.
  */
 class Installer extends LibraryInstaller
 {
+	private $supportedTypes = array(
+        'laravelboot'       => 'LaravelBootInstaller'
+	);
     /**
-     * Get install path for Composer Installer.
-     *
-     * @param \Composer\Package\PackageInterface $package
-     *
-     * @return string
+     * {@inheritDoc}
      */
     public function getInstallPath(PackageInterface $package)
     {
-        list($vendor, $name) = explode('/', $package->getPrettyName());
+        $type = $package->getType();
+        $frameworkType = $this->findFrameworkType($type);
 
-        return 'modules/' . $name;
+        if ($frameworkType === false) {
+            throw new \InvalidArgumentException(
+                'Sorry the package type of this package is not yet supported.'
+            );
+        }
+
+        $class = 'LaravelBoot\\Installer\\Composer\\Installers\\' . $this->supportedTypes[$frameworkType];
+        $installer = new $class($package, $this->composer, $this->getIO());
+
+        return $installer->getInstallPath($package, $frameworkType);
+    }
+
+    public function uninstall(InstalledRepositoryInterface $repo, PackageInterface $package)
+    {
+        if (!$repo->hasPackage($package)) {
+            throw new \InvalidArgumentException('Package is not installed: '.$package);
+        }
+
+        $repo->removePackage($package);
+
+        $installPath = $this->getInstallPath($package);
+        $this->io->write(sprintf('Deleting %s - %s', $installPath, $this->filesystem->removeDirectory($installPath) ? '<comment>deleted</comment>' : '<error>not deleted</error>'));
     }
 
     /**
-     * Confirm supported Package Types.
-     *
-     * @param $packageType
-     *
-     * @return bool
+     * {@inheritDoc}
      */
     public function supports($packageType)
     {
-        return $packageType === 'laravelboot-module';
+        $frameworkType = $this->findFrameworkType($packageType);
+
+        if ($frameworkType === false) {
+            return false;
+        }
+
+        $locationPattern = $this->getLocationPattern($frameworkType);
+
+        return preg_match('#' . $frameworkType . '-' . $locationPattern . '#', $packageType, $matches) === 1;
+    }
+
+    /**
+     * Finds a supported framework type if it exists and returns it
+     *
+     * @param  string $type
+     * @return string
+     */
+    protected function findFrameworkType($type)
+    {
+        $frameworkType = false;
+
+        krsort($this->supportedTypes);
+
+        foreach ($this->supportedTypes as $key => $val) {
+            if ($key === substr($type, 0, strlen($key))) {
+                $frameworkType = substr($type, 0, strlen($key));
+                break;
+            }
+        }
+
+        return $frameworkType;
+    }
+
+    /**
+     * Get the second part of the regular expression to check for support of a
+     * package type
+     *
+     * @param  string $frameworkType
+     * @return string
+     */
+    protected function getLocationPattern($frameworkType)
+    {
+        $pattern = false;
+        if (!empty($this->supportedTypes[$frameworkType])) {
+            $frameworkClass = 'LaravelBoot\\Installer\\Composer\Installers\\' . $this->supportedTypes[$frameworkType];
+            /** @var BaseInstaller $framework */
+            $framework = new $frameworkClass(null, $this->composer, $this->getIO());
+            $locations = array_keys($framework->getLocations());
+            $pattern = $locations ? '(' . implode('|', $locations) . ')' : false;
+        }
+
+        return $pattern ? : '(\w+)';
+    }
+
+    /**
+     * Get I/O object
+     *
+     * @return IOInterface
+     */
+    private function getIO()
+    {
+        return $this->io;
     }
 }
