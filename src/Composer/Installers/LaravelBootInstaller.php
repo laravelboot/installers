@@ -5,7 +5,7 @@ namespace LaravelBoot\Installer\Composer\Installers;
 /**
  * Class Installer.
  */
-class Installer extends BaseInstaller
+class LaravelBootInstaller extends BaseInstaller
 {
 	protected $locations = array(
         'module'    => 'modules/{$name}/',
