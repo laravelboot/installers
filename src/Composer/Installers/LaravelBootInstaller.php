@@ -3,7 +3,7 @@
 namespace LaravelBoot\Installer\Composer\Installers;
 
 /**
- * Class Installer.
+ * Class LaravelBootInstaller.
  */
 class LaravelBootInstaller extends BaseInstaller
 {
